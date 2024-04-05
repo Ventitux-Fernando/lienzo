@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState } from 'react';
 import FilerobotImageEditor, {
   TABS,
@@ -7,10 +8,9 @@ import FilerobotImageEditor, {
 
 
 
-
-
 function ImageEditor() {
-  const [isImgEditorShown, setIsImgEditorShown] = useState(true);
+
+   const [isImgEditorShown, setIsImgEditorShown] = useState(true);
   const [imageSource, setImageSource] = useState('blank-white-background.jpg');
   const [newImageSource, setNewImageSource] = useState('');
   const [uploadedDesignState, setUploadedDesignState] = useState(null);
@@ -47,31 +47,7 @@ function ImageEditor() {
 
   return (
     <div style={{ color: 'black' }}>
-      <div>
-        <input
-          className='w-full max-w-xs h-10 px-3 mb-3 border border-gray-300 rounded-md'
-          type="text"
-          placeholder="Enter image source URL"
-          value={newImageSource}
-          onChange={handleInputChange}
-        />
-        <button
-          className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-          onClick={handleSubmit}
-        >
-          Submit
-        </button>
-        <label htmlFor="file-upload" className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
-          Upload JSON:
-          <input
-            id="file-upload"
-            type="file"
-            accept=".json"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-        </label>
-      </div>
+     
       <div style={{ height: 'calc(100vh - 50px)' }}>
         <FilerobotImageEditor
           theme={{
@@ -83,12 +59,53 @@ function ImageEditor() {
           loadableDesignState={uploadedDesignState}
           source={imageSource}
           onSave={(editedImageObject, designState) => {
-            console.log('saved', editedImageObject, designState);
-            const blob = new Blob([JSON.stringify(designState)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.download = 'designState.json';
-            a.href = URL.createObjectURL(blob);
-            a.click();
+           
+            let imga64 = editedImageObject['imageBase64']; 
+            const id =  localStorage.getItem('dataExporter');
+            // console.log(imga64)
+            if(imga64 )
+              {
+                const byteCharacters = atob(imga64.split(',')[1]);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: `${editedImageObject['mimeType']}` });
+                const formData = new FormData();
+                const headers = new Headers();
+                headers.append('Access-Control-Allow-Origin', '*'); // Reemplaza con tu dominio
+                headers.append('Content-Type', 'multipart/form-data'); // Tipo de contenido del FormData
+                
+                formData.append('imageFile', blob, 'designState.jpg');
+                if(id)
+                  {
+                   formData.append('id', id);
+                 }
+                
+                fetch('http://127.0.0.1:8000/api/lienzo/edit', {
+                headers: {
+                    "Access-Control-Allow-Origin":"*"
+                  },
+                  method: 'POST',
+                  body: formData
+                })
+                .then(response => {
+                  // Manejar la respuesta del backend
+                 
+                  const a = document.createElement('a');
+                  a.href = 'http://localhost:3000/acl/';
+                  a.click();
+                })
+                .catch(error => {
+                  // Manejar errores
+                  console.error('Error al enviar la imagen al backend:', error);
+                });
+
+              }
+            
+
+            
           }}
           onClose={closeImgEditor}
           annotationsCommon={{

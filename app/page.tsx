@@ -7,13 +7,23 @@ import FilerobotImageEditor, {
 
 import dynamic from 'next/dynamic';
 
+import { useSearchParams } from 'next/navigation';
+
 const ImageEditor = dynamic(() => import('./components/ImageEditor'),  {
    loading: () => <p>Loading...</p>,
     ssr: false
 });
 
-function App() {
 
+function App( ) {
+
+const searchParams = useSearchParams();
+
+const newParam = searchParams.get('exporter');
+
+localStorage.setItem('dataExporter', newParam as string);
+
+  
   return (
     <div style={{ color: 'black' }}>
       <ImageEditor />
@@ -21,5 +31,6 @@ function App() {
   );
   
 }
+
 
 export default App;
